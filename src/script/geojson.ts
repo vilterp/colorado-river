@@ -24,6 +24,14 @@ module GeoJSON {
         public static MultiGeometry: string = "MultiGeometry";
     }
 
+    export interface FeatureCollection {
+        features: Array<Feature>
+    }
+
+    export interface Feature {
+        geometry: Geometry
+    }
+
     export interface Geometry {
         type?: string;
     }

@@ -1,0 +1,21 @@
+g.admin_1 path {
+    fill: none;
+    stroke: black;
+}
+
+g.urban_areas path {
+    fill: orange;
+}
+
+g.polygons path {
+    opacity: .5;
+    fill: blue;
+}
+
+g.edges path {
+
+}
+
+g.nodes path {
+    fill: red;
+}

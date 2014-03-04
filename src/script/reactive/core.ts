@@ -260,7 +260,7 @@ module Reactive {
 
     export class Future<A> {
 
-        static wait<B>(futures : Array<Future<B>>) : Future<Array<B>> {
+        static all<B>(futures : Array<Future<B>>) : Future<Array<B>> {
             var comp = new Completer<Array<B>>();
             var completed = 0;
             var results = [];

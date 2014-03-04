@@ -2,17 +2,45 @@
 /// <reference path="reactive/browser.ts"/>
 /// <reference path="reactive/core.ts"/>
 /// <reference path="geojson.ts"/>
+/// <reference path="typings/d3/d3.d.ts"/>
+
+class Layer {
+    constructor(public className:string, public featureCollection:GeoJSON.FeatureCollection) {}
+}
+
+
+function loadLayers(paths:Array<string>) : Reactive.Future<Array<Layer>> {
+    var futures = paths.map((path) => {
+        return Reactive.Browser.HTTP.get('data/' + path + '.geojson')
+            .map((text) => new Layer(path.split('/').reverse()[0], JSON.parse(text)));
+    });
+    return Reactive.Future.all(futures);
+}
+
+class MapView {
+    constructor(public parent:HTMLElement, public layers:Array<Layer>) {}
+}
 
 document.addEventListener('DOMContentLoaded', (_) => {
-    document.getElementById('message').innerText = 'sup';
-    var input = document.getElementById('thing');
-    var keyups = Reactive.Browser.from_event(input, 'keyup');
-    keyups.log('keyups');
+    var container = document.getElementById('viz-container');
+    var svg = d3.select('#viz-container').append('svg');
+    var projection = d3.geo.albersUsa();
+	var path = d3.geo.path().projection(projection);
+    // load data
+    loadLayers(
+        ['natural-earth/admin_1',
+         'natural-earth/urban_areas',
+         'polygons',
+         'edges',
+         'nodes']).then((layers) => {
+        for(var i in layers) {
+            var layer = layers[i];
+            svg.append('g').attr('class', layer.className)
+                .selectAll('path')
+                    .data(layer.featureCollection.features)
+                .enter().append('path')
+                    .attr('d', path);
+        }
+        return null
+    });
 });
-
-var layers = ['polygons', 'nodes'];
-var futures = layers.map((layer) => Reactive.Browser.HTTP.get('data/' + layer + '.geojson'));
-
-Reactive.Future.wait(futures)
-    .map((geojsons) => geojsons.map(JSON.parse))
-    .then((geojsons) => {console.log(geojsons); return null});

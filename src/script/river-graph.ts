@@ -24,12 +24,14 @@ class MapView {
 document.addEventListener('DOMContentLoaded', (_) => {
     var container = document.getElementById('viz-container');
     var svg = d3.select('#viz-container').append('svg');
-    var projection = d3.geo.albersUsa();
+    var projection = d3.geo.albers();
+//        .scale(1000)
+//        .center([-112.49144,36.90182]);
 	var path = d3.geo.path().projection(projection);
     // load data
     loadLayers(
-        ['natural-earth/admin_1',
-         'natural-earth/urban_areas',
+        ['natural-earth/ne_10m_admin_1_states_provinces_shp',
+         'natural-earth/ne_10m_urban_areas',
          'polygons',
          'edges',
          'nodes']).then((layers) => {

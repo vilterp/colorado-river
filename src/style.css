@@ -1,9 +1,9 @@
-g.admin_1 path {
+g.ne_10m_admin_1_states_provinces_shp path {
     fill: none;
     stroke: black;
 }
 
-g.urban_areas path {
+g.ne_10m_urban_areas path {
     fill: orange;
 }
 

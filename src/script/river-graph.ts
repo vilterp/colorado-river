@@ -4,20 +4,44 @@
 /// <reference path="geojson.ts"/>
 /// <reference path="typings/d3/d3.d.ts"/>
 
-class Layer<T extends GeoJSON.Feature> {
-    constructor(public name:string, public features:Array<T>) {}
+interface LayerSpec {
+    path : string;
+    name : string; // used for SVG id
+    view(layerView : LayerView, feature : GeoJSON.Feature) : FeatureView;
 }
 
-
-function loadLayers(paths:Array<string>) : Reactive.Future<Array<Layer<GeoJSON.Feature>>> {
-    var futures = paths.map((path) => {
-        return Reactive.Browser.HTTP.get('data/' + path + '.geojson')
-            .map((text) => new Layer(
-                path.split('/').reverse()[0],
-                (<GeoJSON.FeatureCollection>JSON.parse(text)).features));
-    });
-    return Reactive.Future.all(futures);
+interface Layer {
+    spec : LayerSpec;
+    features : Array<GeoJSON.Feature>;
 }
+
+var layers:Array<LayerSpec> = [
+    {
+        path: 'natural-earth/ne_10m_admin_1_states_provinces_shp',
+        name: 'admin1',
+        view: (lv, feature) => new FeatureView(lv, feature)
+    },
+    {
+        path: 'natural-earth/ne_10m_urban_areas',
+        name: 'urban_areas',
+        view: (lv, feature) => new FeatureView(lv, feature)
+    },
+    {
+        path: 'polygons',
+        name: 'polygons',
+        view: (lv, feature) => new WatershedView(lv, feature)
+    },
+    {
+        path: 'edges',
+        name: 'edges',
+        view: (lv, feature) => new EdgeView(lv, feature)
+    },
+    {
+        path: 'nodes',
+        name: 'nodes',
+        view: (lv, feature) => new NodeView(lv, feature)
+    }
+];
 
 interface AbsView {
     element : Element;
@@ -32,7 +56,7 @@ class View implements AbsView {
 
 class MapView extends View {
     
-    layerViews : Array<LayerView<GeoJSON.Feature>>;
+    layerViews : Array<LayerView>;
     element : SVGSVGElement;
 
     static PROJECTION : D3.Geo.Projection = d3.geo.albersUsa();
@@ -40,12 +64,10 @@ class MapView extends View {
 //        .center([-112.49144,36.90182]);
     static PATH = d3.geo.path().projection(MapView.PROJECTION);
     
-    constructor(public layers:Array<Layer<GeoJSON.Feature>>) {
+    constructor(public layers:Array<Layer>) {
         super();
         this.layerViews = layers.map((layer) => new LayerView(this, layer));
         this.element = <SVGSVGElement>this.createSVGElement('svg');
-//        this.element.setAttribute('width', '1000');
-//        this.element.setAttribute('height', '800');
         var layersGroup = this.createSVGElement('g');
         layersGroup.id = 'layers';
         this.element.appendChild(layersGroup);
@@ -56,16 +78,16 @@ class MapView extends View {
 
 }
 
-class LayerView<T extends GeoJSON.Feature> extends View {
+class LayerView extends View {
 
     element : SVGGElement;
-    featureViews : Array<FeatureView<T>>;
+    featureViews : Array<FeatureView>;
 
-    constructor(public mapView:MapView, public layer:Layer<T>) {
+    constructor(public mapView:MapView, public layer:Layer) {
         super();
         this.element = <SVGGElement>this.createSVGElement('g');
-        this.element.id = 'layer-' + layer.name;
-        this.featureViews = layer.features.map((feat) => new FeatureView<T>(this, feat));
+        this.element.id = 'layer-' + layer.spec.name;
+        this.featureViews = layer.features.map((feat) => layer.spec.view(this, feat));
         this.featureViews.map((fv) => {
            this.element.appendChild(fv.element);
         });
@@ -73,14 +95,61 @@ class LayerView<T extends GeoJSON.Feature> extends View {
     
 }
 
-class FeatureView<T extends GeoJSON.Feature> extends View {
+class FeatureView extends View {
 
     element : SVGPathElement;
 
-    constructor(public layerView:LayerView<T>, public feature:T) {
+    constructor(public layerView:LayerView, public feature:GeoJSON.Feature) {
         super();
         this.element = <SVGPathElement>this.createSVGElement('path');
         this.element.setAttribute('d', MapView.PATH(feature));
+    }
+
+}
+
+class NodeView extends FeatureView {
+
+    constructor(public layerView:LayerView, public feature:GeoJSON.Feature) {
+        super(layerView, feature);
+
+    }
+
+}
+
+class EdgeView extends FeatureView {
+
+}
+
+class WatershedView extends FeatureView {
+
+}
+
+interface SystemEdge {
+    id: number;
+    from_node: number;
+    to_node: number;
+    watershed: number;
+    name: string;
+    type: string;
+}
+
+interface SystemNode {
+    id: number;
+    name: string;
+}
+
+interface Watershed {
+    HUC6: number
+}
+
+class System {
+
+    edgesActive : {[id:number]: Reactive.Signal<boolean>};
+    nodesActive : {[id:number]: Reactive.Signal<boolean>};
+    polygonsActive : {[id:number]: Reactive.Signal<boolean>};
+
+    constructor(edges : Array<SystemEdge>, nodes : Array<SystemNode>, watersheds : Array<Watershed>) {
+//        var graph : {[string: ]}
     }
 
 }
@@ -90,12 +159,17 @@ document.addEventListener('DOMContentLoaded', (_) => {
     var projection = d3.geo.albers();
 	var path = d3.geo.path().projection(projection);
     // load data
-    loadLayers(
-        ['natural-earth/ne_10m_admin_1_states_provinces_shp',
-         'natural-earth/ne_10m_urban_areas',
-         'polygons',
-         'edges',
-         'nodes']).then((layers) => {
+    Reactive.Future.all(layers.map((layerspec) =>
+        Reactive.Browser.HTTP.get('data/' + layerspec.path + '.geojson')
+            .map(JSON.parse)
+            .map((features:GeoJSON.FeatureCollection) => {
+                return {
+                    spec: layerspec,
+                    features: features.features
+                }
+            })
+        )
+    ).then((layers) => {
         var mapView = new MapView(layers);
         container.appendChild(mapView.element);
         return null

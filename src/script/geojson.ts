@@ -25,11 +25,12 @@ module GeoJSON {
     }
 
     export interface FeatureCollection {
-        features: Array<Feature>
+        features: Array<Feature>;
     }
 
     export interface Feature {
-        geometry: Geometry
+        geometry: Geometry;
+        properties?: Object;
     }
 
     export interface Geometry {

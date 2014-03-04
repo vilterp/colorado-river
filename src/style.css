@@ -1,21 +1,32 @@
-g.ne_10m_admin_1_states_provinces_shp path {
+#viz-container {
+    width: 1000px;
+    border: solid black 1px;
+    margin: 0 auto;
+}
+
+svg {
+    border: solid black 1px;
+}
+
+#layer-ne_10m_admin_1_states_provinces_shp path {
     fill: none;
     stroke: black;
 }
 
-g.ne_10m_urban_areas path {
+#layer-ne_10m_urban_areas path {
     fill: orange;
 }
 
-g.polygons path {
+#layer-polygons path {
     opacity: .5;
     fill: blue;
 }
 
-g.edges path {
+#layer-edges path {
 
 }
 
-g.nodes path {
+#layer-nodes path {
     fill: red;
+    cursor: pointer;
 }

@@ -29,7 +29,7 @@ BOUNDING_BOX := src/data/boundingbox.shp
 convert: builddir build/data/polygons.geojson build/data/nodes.geojson build/data/edges.geojson build/data/natural-earth/ne_10m_admin_1_states_provinces_shp.geojson build/data/natural-earth/ne_10m_urban_areas.geojson
 
 build/%.geojson: src/%.shp
-	rm $@
+	rm -f $@
 	ogr2ogr -f GeoJSON -clipsrc $(BOUNDING_BOX) $@ $<
 
 clean:

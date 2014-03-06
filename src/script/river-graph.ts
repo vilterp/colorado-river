@@ -111,7 +111,9 @@ class NodeView extends FeatureView {
 
     constructor(public layerView:LayerView, public feature:GeoJSON.Feature) {
         super(layerView, feature);
-
+        this.element.addEventListener('click', (evt) => {
+            console.log(this.feature.properties);
+        });
     }
 
 }

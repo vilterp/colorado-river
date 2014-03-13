@@ -17,17 +17,29 @@ svg {
     fill: orange;
 }
 
-#layer-polygons path {
+.watershed-view {
     opacity: .5;
     fill: blue;
 }
 
-#layer-edges path {
+.watershed-view.active {
+    fill: green;
+}
+
+.edge-view {
     stroke: black;
     stroke-weight: 1px;
 }
 
-#layer-nodes path {
+.edge-view.active {
+    stroke: red;
+}
+
+.node-view {
     fill: red;
     cursor: pointer;
+}
+
+.node-view.active {
+    fill: yellow;
 }

@@ -99,7 +99,7 @@ class MapView extends View {
             features: layers.watersheds,
             view: (lv, feature) => new WatershedView(lv, feature)
         };
-        this.layerViews = [admin1, urban_areas, nodes, edges, watersheds].map((layer) =>
+        this.layerViews = [admin1, urban_areas, watersheds, edges, nodes].map((layer) =>
             new LayerView(this, layer));
 
         // initialize DOM
@@ -349,7 +349,9 @@ function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<bool
                     return system.edgesActive[eId];
                 }));
                 var selected = node_selected_signals[id];
+                selected.log('node' + id + ' selected');
                 system.nodesActive[id] = Reactive.Signal.or([downstream_active, selected]);
+                system.nodesActive[id].log('node' + id + ' active');
                 break;
             case 'e':
                 // to_node
@@ -381,10 +383,12 @@ class SignalSystem {
 
 }
 
+var mapView;
+
 document.addEventListener('DOMContentLoaded', (_) => {
     var container = document.getElementById('viz-container');
     loadData().then((layerData) => {
-        var mapView = new MapView(layerData);
+        mapView = new MapView(layerData);
         container.appendChild(mapView.element);
         return null
     });

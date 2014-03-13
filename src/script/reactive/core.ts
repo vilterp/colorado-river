@@ -88,6 +88,22 @@ module Reactive {
             );
             return controller.stream;
         }
+
+        distinct() : Stream<A> {
+            var controller = new StreamController<A>();
+            var lastEvent = null;
+            this.listen(
+                (event) => {
+                    if(event !== lastEvent) {
+                        lastEvent = event;
+                        controller.add(event);
+                    }
+                },
+                (err) => controller.error(err),
+                (reason) => controller.close(reason)
+            );
+            return controller.stream;
+        }
     
         filter(func : (A) => boolean) : Stream<A> {
             var controller = new StreamController<A>();
@@ -144,9 +160,9 @@ module Reactive {
         log(name : string) : void {
             var repr = name ? name : this.toString();
             this.listen(
-                (event) => console.log(repr + ":event: ", event),
-                (error) => console.log(repr + ":error: ", error),
-                (reason) => console.log(repr + ":close: ", reason)
+                (event) => console.log(repr + ':event:', event),
+                (error) => console.log(repr + ':error:', error),
+                (reason) => console.log(repr + ':close:', reason)
             );
         }
 
@@ -198,8 +214,10 @@ module Reactive {
         }
 
         update(newValue : T) : void {
-            this.updates.add(newValue);
-            this.signal.value = newValue;
+            if(this.signal.value !== newValue) {
+                this.signal.value = newValue;
+                this.updates.add(newValue);
+            }
         }
 
     }
@@ -246,7 +264,12 @@ module Reactive {
         }
 
         map<B>(mapper : (A) => B) : Signal<B> {
-            return new Signal(mapper(this.value), this.updates.map(mapper));
+            return new Signal(mapper(this.value), this.updates.map(mapper).distinct());
+        }
+
+        log(tag : string) {
+            console.log(tag + ':initial:', this.value.toString());
+            this.updates.log(tag);
         }
 
     }

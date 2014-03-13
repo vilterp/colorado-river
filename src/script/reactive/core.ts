@@ -224,7 +224,7 @@ module Reactive {
         }
 
         static derived<B>(signals : Signal<any>[], comp : (values:Array<any>) => B) : Signal<B> {
-            var recompute : () => any = () => Function.apply(comp, signals.map((s) => s.value));
+            var recompute : () => any = () => comp.apply(this, [signals.map((s) => s.value)]);
             var controller = new SignalController(recompute());
             signals.forEach((signal) => {
                 signal.updates.listen((_) =>
@@ -232,6 +232,17 @@ module Reactive {
                 );
             });
             return controller.signal;
+        }
+
+        static or(signals : Array<Signal<boolean>>):Signal<boolean> {
+            return Signal.derived(signals, (values) => {
+                // this is a fold...
+                var val = false;
+                for(var i=0; i < values.length; i++) {
+                    val = val || values[i];
+                }
+                return val;
+            });
         }
 
         map<B>(mapper : (A) => B) : Signal<B> {

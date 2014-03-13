@@ -6,10 +6,10 @@ module Reactive.Browser {
         return controller.stream;
     }
 
-    export function bind_value(signal : Signal<any>, element : HTMLElement, attr_name : string) {
-        element[attr_name] = signal.value;
+    export function bind_to_attribute(signal : Signal<any>, element : Element, attr_name : string) {
+        element.setAttribute(attr_name, signal.value);
         signal.updates.listen(
-            (value) => { element[attr_name] = value; }
+            (value) => { element.setAttribute(attr_name, signal.value); }
         )
     }
 

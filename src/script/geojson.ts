@@ -30,7 +30,7 @@ module GeoJSON {
 
     export interface Feature {
         geometry: Geometry;
-        properties?: Object;
+        properties: Object;
     }
 
     export interface Geometry {

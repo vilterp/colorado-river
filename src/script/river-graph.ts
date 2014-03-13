@@ -365,7 +365,7 @@ function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<bool
             case 'w':
                 // edge nodes...
                 // TODO: same as above
-                system.watershedsActive[id] = system.edgesActive[parseInt(adj_list_downstream_copy.getEdges('e' + id)[0].substr(1))];
+                system.watershedsActive[id] = system.edgesActive[parseInt(adj_list_downstream_copy.getEdges('w' + id)[0].substr(1))];
                 break;
         }
     });

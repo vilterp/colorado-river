@@ -264,7 +264,7 @@ module Reactive {
         }
 
         map<B>(mapper : (A) => B) : Signal<B> {
-            return new Signal(mapper(this.value), this.updates.map(mapper).distinct());
+            return Signal.derived([this], (values:A[]) => mapper(values[0]));
         }
 
         log(tag : string) {

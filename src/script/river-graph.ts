@@ -110,6 +110,9 @@ class MapView extends View {
         this.layerViews.map((lv) => {
            layersGroup.appendChild(lv.element);
         });
+        this.element.addEventListener('click', (_) => {
+            this.selectedController.update(-1);
+        });
     }
 
 }
@@ -166,7 +169,7 @@ class NodeView extends SystemElementView<SystemNode> {
 
     constructor(layerView:LayerView<SystemNode>, feature:SystemNode) {
         super(layerView, feature, layerView.mapView.signalSystem.nodesActive[feature.properties.id]);
-        this.element.addEventListener('click', (_) => {
+        this.element.addEventListener('click', (evt) => {
             var mapview_selected = this.layerView.mapView.selected;
             var mapview_selected_controller = this.layerView.mapView.selectedController;
             if(mapview_selected.value == feature.properties.id) {
@@ -175,6 +178,7 @@ class NodeView extends SystemElementView<SystemNode> {
             } else {
                 mapview_selected_controller.update(feature.properties.id);
             }
+            evt.stopPropagation();
         });
         this.bindActive('node-view');
     }

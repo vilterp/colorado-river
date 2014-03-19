@@ -347,7 +347,7 @@ function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<bool
         switch(type) {
             case 'n':
                 // or edge nodes
-                var downstream_active = Reactive.Signal.or(adj_list_downstream.getEdges('n' + id).map((key) => {
+                var downstream_active = Reactive.Signal.or(adj_list_downstream_copy.getEdges('n' + id).map((key) => {
                     assert(key[0] == 'e', 'nodes should only depend on edges');
                     var eId = parseInt(key.substr(1));
                     return system.edgesActive[eId];

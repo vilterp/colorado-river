@@ -6,7 +6,7 @@
         <extent>
             <xmin>-1957235.77509775198996067</xmin>
             <ymin>-1438376.50706345262005925</ymin>
-            <xmax>-578757.23226245248224586</xmax>
+            <xmax>-578757.23226245236583054</xmax>
             <ymax>-485973.15019542747177184</ymax>
         </extent>
         <projections>1</projections>
@@ -59,9 +59,9 @@
                 <legendlayerfile isInOverview="0" layerid="ne_10m_admin_0_map_units20140304003225437" visible="0"/>
             </filegroup>
         </legendlayer>
-        <legendlayer drawingOrder="-1" open="false" checked="Qt::Checked" name="SR_HR" showFeatureCount="0">
+        <legendlayer drawingOrder="-1" open="false" checked="Qt::Unchecked" name="SR_HR" showFeatureCount="0">
             <filegroup open="false" hidden="false">
-                <legendlayerfile isInOverview="0" layerid="SR_HR20140305205913644" visible="1"/>
+                <legendlayerfile isInOverview="0" layerid="SR_HR20140305205913644" visible="0"/>
             </filegroup>
         </legendlayer>
     </legend>
@@ -1061,7 +1061,7 @@
             <active type="int">1</active>
             <timeFrameType type="QString">days</timeFrameType>
             <loopAnimation type="int">0</loopAnimation>
-            <currentMapTimePosition type="int">1393836219</currentMapTimePosition>
+            <currentMapTimePosition type="int">1394708393</currentMapTimePosition>
             <animationFrameLength type="int">2000</animationFrameLength>
             <timeLayerList type="QStringList"/>
             <playBackwards type="int">0</playBackwards>

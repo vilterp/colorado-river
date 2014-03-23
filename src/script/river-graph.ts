@@ -7,7 +7,7 @@
 interface Layer<A extends GeoJSON.Feature> {
     name : string;
     features : Array<A>;
-    view(layerView : LayerView<A>, feature : A) : FeatureView<A>;
+    view(layerView : LayerView<A>, feature : A) : AbsFeatureView<A>;
 }
 
 interface LayerData {
@@ -57,7 +57,12 @@ class MapView extends View {
     selectedController : Reactive.SignalController<number>;
     selected : Reactive.Signal<number>;
 
+    adj_list_downstream : AdjList;
+    adj_list_upstream : AdjList;
+
     path : Reactive.Signal<D3.Geo.Path>;
+
+    edges_by_id : {[edge_id : number] : SystemEdge};
 
     constructor(public layers:LayerData) {
         super();
@@ -68,14 +73,14 @@ class MapView extends View {
         layers.nodes.forEach((node) => {
            this.nodeSelectedSignals[node.properties.id] = this.selected.map((id) => id == node.properties.id);
         });
-        this.signalSystem = topSortSystem(this.nodeSelectedSignals,
-                                          layers.edges, layers.nodes, layers.watersheds);
+        this.adj_list_downstream = buildAdjList(layers.nodes, layers.edges, layers.watersheds);
+        this.adj_list_upstream = this.adj_list_downstream.reverse();
+        this.signalSystem = this.buildSignalSystem();
         // initialize DOM
         this.element = <SVGSVGElement>this.createSVGElement('svg');
         var layersGroup = this.createSVGElement('g');
         layersGroup.id = 'layers';
         this.element.appendChild(layersGroup);
-
         // initialize projection
         // trying to get the projection right
         var center = Reactive.Signal.constant({x: -17, y: 37});
@@ -96,7 +101,11 @@ class MapView extends View {
         this.path = proj.map((proj) => {
             return d3.geo.path().projection(proj);
         });
-
+        // build edges map
+        this.edges_by_id = {};
+        layers.edges.forEach((edge) => {
+            this.edges_by_id[edge.properties.id] = edge;
+        });
         // initialize layers...
         var admin1:Layer<GeoJSON.Feature> = {
             name: 'admin1',
@@ -134,6 +143,63 @@ class MapView extends View {
         });
     }
 
+    buildSignalSystem() {
+        var adj_list_downstream_copy = this.adj_list_downstream.copy();
+        // sort
+        var order = [];
+        var system_nodes = adj_list_downstream_copy.nodes();
+        while(system_nodes.length > 0) {
+            // find node with no out edges
+            var node;
+            for(var i = 0; i < system_nodes.length; i++) {
+                node = system_nodes[i];
+                if(adj_list_downstream_copy.getEdges(node).length == 0) {
+                    order.push(node);
+                    system_nodes.splice(i, 1);
+                    break;
+                }
+            }
+            // given that this is a DAG, node will be set to something
+            // remove all edges to node
+            this.adj_list_upstream.getEdges(node).forEach((upstream_node) => {
+                adj_list_downstream_copy.removeEdge(upstream_node, node);
+            });
+        }
+        console.log(order);
+        // build signals
+        var system = new SignalSystem();
+        order.forEach((element) => {
+            var type = element[0];
+            var id = parseInt(element.substr(1));
+            switch(type) {
+                case 'n':
+                    // or edge nodes
+                    var downstream_active = Reactive.Signal.or(this.adj_list_downstream.getEdges('n' + id).map((key) => {
+                        assert(key[0] == 'e', 'nodes should only depend on edges');
+                        var eId = parseInt(key.substr(1));
+                        return system.edgesActive[eId];
+                    }));
+                    var selected = this.nodeSelectedSignals[id];
+                    selected.log('node' + id + ' selected');
+                    system.nodesActive[id] = Reactive.Signal.or([downstream_active, selected]);
+                    system.nodesActive[id].log('node' + id + ' active');
+                    break;
+                case 'e':
+                    // to_node
+                    // TODO: easier to get ahold of edge object & get to_node?
+                    system.edgesActive[id] = system.nodesActive[parseInt(this.adj_list_downstream.getEdges('e' + id)[0].substr(1))];
+                    break;
+                case 'w':
+                    // edge nodes...
+                    // TODO: same as above
+                    system.watershedsActive[id] = system.edgesActive[parseInt(this.adj_list_downstream.getEdges('w' + id)[0].substr(1))];
+                    break;
+            }
+        });
+        // return signal maps
+        return system;
+    }
+
 }
 
 class LayerView<A extends GeoJSON.Feature> extends View {
@@ -153,12 +219,20 @@ class LayerView<A extends GeoJSON.Feature> extends View {
     
 }
 
-class FeatureView<A extends GeoJSON.Feature> extends View {
+class AbsFeatureView<A extends GeoJSON.Feature> extends View {
 
-    element : SVGPathElement;
+    element : SVGElement;
 
     constructor(public layerView:LayerView<A>, public feature:A) {
         super();
+    }
+
+}
+
+class FeatureView<A extends GeoJSON.Feature> extends AbsFeatureView<A> {
+
+    constructor(layerView:LayerView<A>, feature:A) {
+        super(layerView, feature);
         this.element = <SVGPathElement>this.createSVGElement('path');
         var svg_path = this.layerView.mapView.path.map((path) => { return path(this.feature) });
         this.element.setAttribute('d', svg_path.value);
@@ -188,10 +262,29 @@ class SystemElementView<A extends SystemElement> extends FeatureView<A> {
 
 }
 
-class NodeView extends SystemElementView<SystemNode> {
+class NodeView extends AbsFeatureView<SystemNode> {
+
+    static DEFAULT_POINT_RADIUS = 10;
 
     constructor(layerView:LayerView<SystemNode>, feature:SystemNode) {
-        super(layerView, feature, layerView.mapView.signalSystem.nodesActive[feature.properties.id]);
+        super(layerView, feature);
+        // point radius: max of edge widths
+        // get list of edges
+        var upstream = layerView.mapView.adj_list_upstream.getEdges('n' + feature.properties.id);
+        var downstream = layerView.mapView.adj_list_upstream.getEdges('n' + feature.properties.id);
+        var all = upstream.concat(downstream).map((e) => parseInt(e.substr(1)));
+        var edges = all.map((id) => layerView.mapView.edges_by_id[id]);
+        console.log(edges);
+        var widths = edges.map((edge) => EdgeView.EDGE_SCALE(edge.properties.flow_rate + 1) / 1.5);
+        var maxwidth = max(widths);
+        layerView.mapView.path.value.pointRadius(maxwidth);
+        // initialize element
+        this.element = this.createSVGElement('path');
+        this.element.setAttribute('d', layerView.mapView.path.value(feature));
+        layerView.mapView.path.value.pointRadius(NodeView.DEFAULT_POINT_RADIUS);
+        // signals
+        var active = layerView.mapView.signalSystem.nodesActive[feature.properties.id];
+        var selected = layerView.mapView.nodeSelectedSignals[feature.properties.id];
         this.element.addEventListener('click', (evt) => {
             var mapview_selected = this.layerView.mapView.selected;
             var mapview_selected_controller = this.layerView.mapView.selectedController;
@@ -203,15 +296,30 @@ class NodeView extends SystemElementView<SystemNode> {
             }
             evt.stopPropagation();
         });
-        this.bindActive('node-view');
+        var className = Reactive.Signal.derived([active, selected], (values) => {
+            var a = values[0];
+            var s = values[1];
+            var segments = ['node-view'];
+            if(a) {
+                segments.push('active');
+            }
+            if(s) {
+                segments.push('selected');
+            }
+            return segments.join(' ');
+        });
+        Reactive.Browser.bind_to_attribute(className, this.element, 'class');
     }
 
 }
 
 class EdgeView extends SystemElementView<SystemEdge> {
 
+    static EDGE_SCALE = d3.scale.log().domain([1, 11]).range([0, 20]);
+
     constructor(layerView:LayerView<SystemEdge>, feature:SystemEdge) {
         super(layerView, feature, layerView.mapView.signalSystem.edgesActive[feature.properties.id]);
+        this.element.setAttribute('stroke-width', EdgeView.EDGE_SCALE(feature.properties.flow_rate + 1) + 'px');
         this.bindActive('edge-view');
     }
 
@@ -235,6 +343,7 @@ interface SystemEdge extends SystemElement {
         to_node: number;
         name: string;
         type: string;
+        flow_rate: number;
     };
 }
 
@@ -325,10 +434,18 @@ function assert(condition, message) {
     }
 }
 
-function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<boolean>},
-                       edges: Array<SystemEdge>,
-                       nodes: Array<SystemNode>,
-                       watersheds: Array<SystemWatershed>):SignalSystem {
+function max(numbers) {
+    var max = -Infinity;
+    for(var i=0; i < numbers.length; i++) {
+        var num = numbers[i];
+        if(num > max) {
+            max = num;
+        }
+    }
+    return max;
+}
+
+function buildAdjList(nodes:Array<SystemNode>, edges:Array<SystemEdge>, watersheds:Array<SystemWatershed>) {
     // build adjacency list
     var adj_list_downstream = new AdjList(); // arrows point in water flow direction (downstream)
     edges.forEach((edge) => {
@@ -338,62 +455,7 @@ function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<bool
     watersheds.forEach((watershed) => {
         adj_list_downstream.addEdge('w' + watershed.properties.id, 'e' + watershed.properties.to_edge);
     });
-    var adj_list_upstream = adj_list_downstream.reverse();
-    var adj_list_downstream_copy = adj_list_downstream.copy();
-
-    // top sort
-    var order = [];
-    var system_nodes = adj_list_downstream.nodes();
-    while(system_nodes.length > 0) {
-        // find node with no out edges
-        var node;
-        for(var i = 0; i < system_nodes.length; i++) {
-            node = system_nodes[i];
-            if(adj_list_downstream.getEdges(node).length == 0) {
-                order.push(node);
-                system_nodes.splice(i, 1);
-                break;
-            }
-        }
-        // given that this is a DAG, node will be set to something
-        // remove all edges to node
-        adj_list_upstream.getEdges(node).forEach((upstream_node) => {
-            adj_list_downstream.removeEdge(upstream_node, node);
-        });
-    }
-    console.log(order);
-    // build signals
-    var system = new SignalSystem();
-    order.forEach((element) => {
-        var type = element[0];
-        var id = parseInt(element.substr(1));
-        switch(type) {
-            case 'n':
-                // or edge nodes
-                var downstream_active = Reactive.Signal.or(adj_list_downstream_copy.getEdges('n' + id).map((key) => {
-                    assert(key[0] == 'e', 'nodes should only depend on edges');
-                    var eId = parseInt(key.substr(1));
-                    return system.edgesActive[eId];
-                }));
-                var selected = node_selected_signals[id];
-                selected.log('node' + id + ' selected');
-                system.nodesActive[id] = Reactive.Signal.or([downstream_active, selected]);
-                system.nodesActive[id].log('node' + id + ' active');
-                break;
-            case 'e':
-                // to_node
-                // TODO: easier to get ahold of edge object & get to_node?
-                system.edgesActive[id] = system.nodesActive[parseInt(adj_list_downstream_copy.getEdges('e' + id)[0].substr(1))];
-                break;
-            case 'w':
-                // edge nodes...
-                // TODO: same as above
-                system.watershedsActive[id] = system.edgesActive[parseInt(adj_list_downstream_copy.getEdges('w' + id)[0].substr(1))];
-                break;
-        }
-    });
-    // return signal maps
-    return system;
+    return adj_list_downstream;
 }
 
 class SignalSystem {

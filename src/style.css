@@ -41,5 +41,11 @@ svg {
 }
 
 .node-view.active {
+    fill: orange;
+    stroke-width: 1px;
+    stroke: black;
+}
+
+.node-view.active.selected {
     fill: yellow;
 }

@@ -13,6 +13,20 @@ module Reactive.Browser {
         )
     }
 
+    // wooo
+    export interface Point {
+        x : number;
+        y : number;
+    }
+
+    export function mouse_pos(element : Element) : Signal<Point> {
+        var controller = new SignalController<Point>({ x: 0, y:0 });
+        element.addEventListener('mousemove', (evt : MouseEvent) => {
+           controller.update({ x: evt.offsetX, y: evt.offsetY });
+        });
+        return controller.signal;
+    }
+
     export module HTTP {
 
         export interface HTTPResponse {

@@ -267,8 +267,11 @@ module Reactive {
             return Signal.derived([this], (values:A[]) => mapper(values[0]));
         }
 
-        log(tag : string) {
-            console.log(tag + ':initial:', this.value.toString());
+        log(tag? : string) {
+            if(tag == undefined) {
+                tag = "<#Signal>";
+            }
+            console.log(tag + ':initial:', this.value);
             this.updates.log(tag);
         }
 

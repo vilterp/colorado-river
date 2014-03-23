@@ -57,10 +57,7 @@ class MapView extends View {
     selectedController : Reactive.SignalController<number>;
     selected : Reactive.Signal<number>;
 
-    static PROJECTION : D3.Geo.Projection = d3.geo.albersUsa();
-//       .scale(1000)
-//       .center([-112.49144,36.90182]);
-    static PATH = d3.geo.path().projection(MapView.PROJECTION);
+    path : Reactive.Signal<D3.Geo.Path>;
 
     constructor(public layers:LayerData) {
         super();
@@ -73,6 +70,33 @@ class MapView extends View {
         });
         this.signalSystem = topSortSystem(this.nodeSelectedSignals,
                                           layers.edges, layers.nodes, layers.watersheds);
+        // initialize DOM
+        this.element = <SVGSVGElement>this.createSVGElement('svg');
+        var layersGroup = this.createSVGElement('g');
+        layersGroup.id = 'layers';
+        this.element.appendChild(layersGroup);
+
+        // initialize projection
+        // trying to get the projection right
+        var center = Reactive.Signal.constant({x: -17, y: 37});
+//        var mousePos = Reactive.Browser.mouse_pos(this.element);
+//        var xscale = d3.scale.linear().domain([0, 800]).range([-180, 180]);
+//        var yscale = d3.scale.linear().domain([0, 500]).range([-90, 90]);
+//        var center = mousePos.map((pos) => { return { x: xscale(pos.x), y: yscale(pos.y) } });
+//        center.log('center');
+//        center.log('center');
+//        var scale_scale = d3.scale.linear().domain([0, 600]).range([50, 3500]);
+        var scale = Reactive.Signal.constant(3800);
+        scale.log('scale');
+        var proj = Reactive.Signal.derived([scale, center], (values) => {
+            var scale = values[0];
+            var center = values[1];
+            return d3.geo.albers().scale(scale).center([center.x, center.y]);
+        });
+        this.path = proj.map((proj) => {
+            return d3.geo.path().projection(proj);
+        });
+
         // initialize layers...
         var admin1:Layer<GeoJSON.Feature> = {
             name: 'admin1',
@@ -101,12 +125,7 @@ class MapView extends View {
         };
         this.layerViews = [admin1, urban_areas, watersheds, edges, nodes].map((layer) =>
             new LayerView(this, layer));
-
-        // initialize DOM
-        this.element = <SVGSVGElement>this.createSVGElement('svg');
-        var layersGroup = this.createSVGElement('g');
-        layersGroup.id = 'layers';
-        this.element.appendChild(layersGroup);
+        // add layer elements to DOM
         this.layerViews.map((lv) => {
            layersGroup.appendChild(lv.element);
         });
@@ -141,7 +160,11 @@ class FeatureView<A extends GeoJSON.Feature> extends View {
     constructor(public layerView:LayerView<A>, public feature:A) {
         super();
         this.element = <SVGPathElement>this.createSVGElement('path');
-        this.element.setAttribute('d', MapView.PATH(feature));
+        var svg_path = this.layerView.mapView.path.map((path) => { return path(this.feature) });
+        this.element.setAttribute('d', svg_path.value);
+        svg_path.updates.listen((path) => {
+           this.element.setAttribute('d', path);
+        });
     }
 
 }
@@ -325,7 +348,7 @@ function topSortSystem(node_selected_signals: {[id:number]: Reactive.Signal<bool
         // find node with no out edges
         var node;
         for(var i = 0; i < system_nodes.length; i++) {
-            node = system_nodes[i]; // f'ing javascript
+            node = system_nodes[i];
             if(adj_list_downstream.getEdges(node).length == 0) {
                 order.push(node);
                 system_nodes.splice(i, 1);

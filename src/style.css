@@ -1,7 +1,10 @@
-#viz-container {
-    width: 1000px;
-    border: solid black 1px;
+#container {
     margin: 0 auto;
+    width: 1000px;
+    height: 650px;
+}
+
+#mapview-container {
 }
 
 svg {
@@ -19,7 +22,7 @@ svg {
 
 .watershed-view {
     opacity: .5;
-    fill: blue;
+    fill: rgb(0,70,200);
 }
 
 .watershed-view.active {
@@ -27,25 +30,21 @@ svg {
 }
 
 .edge-view {
-    stroke: black;
+    stroke: gray;
     stroke-weight: 1px;
 }
 
 .edge-view.active {
-    stroke: red;
+    stroke: blue;
 }
 
 .node-view {
-    fill: red;
+    fill: pink;
     cursor: pointer;
 }
 
 .node-view.active {
-    fill: orange;
+    fill: purple;
     stroke-width: 1px;
     stroke: black;
-}
-
-.node-view.active.selected {
-    fill: yellow;
 }

@@ -13,6 +13,11 @@ module Reactive.Browser {
         )
     }
 
+    export function bind_to_innerText(element : HTMLElement, text : Signal<string>) {
+        element.innerText = text.value;
+        text.updates.listen((value) => element.innerText = value);
+    }
+
     // wooo
     export interface Point {
         x : number;

@@ -56,6 +56,8 @@ class MapView extends View {
     signalSystem : SignalSystem;
     selectedController : Reactive.SignalController<number>;
     selected : Reactive.Signal<number>;
+    hoveredController : Reactive.SignalController<SystemElement>;
+    hovered : Reactive.Signal<SystemElement>;
 
     adj_list_downstream : AdjList;
     adj_list_upstream : AdjList;
@@ -73,6 +75,10 @@ class MapView extends View {
         layers.nodes.forEach((node) => {
            this.nodeSelectedSignals[node.properties.id] = this.selected.map((id) => id == node.properties.id);
         });
+        // hovered
+        this.hoveredController = new Reactive.SignalController<SystemElement>(null);
+        this.hovered = this.hoveredController.signal;
+        // adj list & signal system
         this.adj_list_downstream = buildAdjList(layers.nodes, layers.edges, layers.watersheds);
         this.adj_list_upstream = this.adj_list_downstream.reverse();
         this.signalSystem = this.buildSignalSystem();
@@ -247,6 +253,9 @@ class SystemElementView<A extends SystemElement> extends FeatureView<A> {
 
     constructor(layerView:LayerView<A>, feature:A, public active:Reactive.Signal<boolean>) {
         super(layerView, feature);
+        this.element.addEventListener('mouseenter', (evt) => {
+            layerView.mapView.hoveredController.update(this.feature);
+        });
     }
 
     bindActive(className:string) {
@@ -264,20 +273,13 @@ class SystemElementView<A extends SystemElement> extends FeatureView<A> {
 
 class NodeView extends AbsFeatureView<SystemNode> {
 
-    static DEFAULT_POINT_RADIUS = 10;
+    static DEFAULT_POINT_RADIUS = 5;
 
     constructor(layerView:LayerView<SystemNode>, feature:SystemNode) {
         super(layerView, feature);
         // point radius: max of edge widths
-        // get list of edges
-        var upstream = layerView.mapView.adj_list_upstream.getEdges('n' + feature.properties.id);
-        var downstream = layerView.mapView.adj_list_upstream.getEdges('n' + feature.properties.id);
-        var all = upstream.concat(downstream).map((e) => parseInt(e.substr(1)));
-        var edges = all.map((id) => layerView.mapView.edges_by_id[id]);
-        console.log(edges);
-        var widths = edges.map((edge) => EdgeView.EDGE_SCALE(edge.properties.flow_rate + 1) / 1.5);
-        var maxwidth = max(widths);
-        layerView.mapView.path.value.pointRadius(maxwidth);
+        var maxwidth = this.maxWidthOfConnectedEdges();
+        layerView.mapView.path.value.pointRadius(Math.max(maxwidth, NodeView.DEFAULT_POINT_RADIUS));
         // initialize element
         this.element = this.createSVGElement('path');
         this.element.setAttribute('d', layerView.mapView.path.value(feature));
@@ -309,13 +311,28 @@ class NodeView extends AbsFeatureView<SystemNode> {
             return segments.join(' ');
         });
         Reactive.Browser.bind_to_attribute(className, this.element, 'class');
+        // hovered
+        this.element.addEventListener('mouseenter', (evt) => {
+            layerView.mapView.hoveredController.update(this.feature);
+        });{}
+    }
+
+    maxWidthOfConnectedEdges() : number {
+        // get list of edges
+        var upstream = this.layerView.mapView.adj_list_upstream.getEdges('n' + this.feature.properties.id);
+        var downstream = this.layerView.mapView.adj_list_upstream.getEdges('n' + this.feature.properties.id);
+        var all = upstream.concat(downstream).map((e) => parseInt(e.substr(1)));
+        var edges = all.map((id) => this.layerView.mapView.edges_by_id[id]);
+        console.log(edges);
+        var widths = edges.map((edge) => EdgeView.EDGE_SCALE(edge.properties.flow_rate + 1) / 1.5);
+        return max(widths);
     }
 
 }
 
 class EdgeView extends SystemElementView<SystemEdge> {
 
-    static EDGE_SCALE = d3.scale.log().domain([1, 11]).range([0, 20]);
+    static EDGE_SCALE = (flow) => Math.max(5, d3.scale.log().domain([1, 11]).range([0, 20])(flow));
 
     constructor(layerView:LayerView<SystemEdge>, feature:SystemEdge) {
         super(layerView, feature, layerView.mapView.signalSystem.edgesActive[feature.properties.id]);
@@ -334,7 +351,11 @@ class WatershedView extends SystemElementView<SystemWatershed> {
 
 }
 
-interface SystemElement extends GeoJSON.Feature {}
+interface SystemElement extends GeoJSON.Feature {
+    properties: {
+        name: string;
+    }
+}
 
 interface SystemEdge extends SystemElement {
     properties: {
@@ -358,6 +379,7 @@ interface SystemWatershed extends SystemElement {
     properties: {
         id: number;
         to_edge: number;
+        name: string;
     }
 }
 
@@ -475,10 +497,19 @@ class SignalSystem {
 var mapView;
 
 document.addEventListener('DOMContentLoaded', (_) => {
-    var container = document.getElementById('viz-container');
+    var container = document.getElementById('mapview-container');
     loadData().then((layerData) => {
         mapView = new MapView(layerData);
         container.appendChild(mapView.element);
-        return null
+        var hoveredIndicator = document.getElementById('hovered-indicator');
+        Reactive.Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
+            if(el) {
+                return el.properties.name;
+            } else {
+                return "";
+            }
+        }));
+        mapView.hovered.log('hovered');
+        return null;
     });
 });

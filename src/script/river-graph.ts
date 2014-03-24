@@ -504,7 +504,12 @@ document.addEventListener('DOMContentLoaded', (_) => {
         var hoveredIndicator = document.getElementById('hovered-indicator');
         Reactive.Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
             if(el) {
-                return el.properties.name;
+                var name = el.properties.name;
+                if(el.properties.flow_rate) {
+                    return name + ". Flow rate: " + el.properties.flow_rate + " million acre feet / year";
+                } else {
+                    return name;
+                }
             } else {
                 return "";
             }

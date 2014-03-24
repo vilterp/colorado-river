@@ -320,7 +320,7 @@ class NodeView extends AbsFeatureView<SystemNode> {
     maxWidthOfConnectedEdges() : number {
         // get list of edges
         var upstream = this.layerView.mapView.adj_list_upstream.getEdges('n' + this.feature.properties.id);
-        var downstream = this.layerView.mapView.adj_list_upstream.getEdges('n' + this.feature.properties.id);
+        var downstream = this.layerView.mapView.adj_list_downstream.getEdges('n' + this.feature.properties.id);
         var all = upstream.concat(downstream).map((e) => parseInt(e.substr(1)));
         var edges = all.map((id) => this.layerView.mapView.edges_by_id[id]);
         console.log(edges);

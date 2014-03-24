@@ -48,3 +48,11 @@ svg {
     stroke-width: 1px;
     stroke: black;
 }
+
+#layer-admin1 path {
+    fill: #e6ffe1;
+}
+
+svg {
+    background-color: #d6ecf9;
+}

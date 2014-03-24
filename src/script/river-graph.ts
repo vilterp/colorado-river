@@ -89,7 +89,7 @@ class MapView extends View {
         this.element.appendChild(layersGroup);
         // initialize projection
         // trying to get the projection right
-        var center = Reactive.Signal.constant({x: -17, y: 37});
+        var center = Reactive.Signal.constant({x: -19, y: 37.5});
 //        var mousePos = Reactive.Browser.mouse_pos(this.element);
 //        var xscale = d3.scale.linear().domain([0, 800]).range([-180, 180]);
 //        var yscale = d3.scale.linear().domain([0, 500]).range([-90, 90]);
@@ -97,7 +97,7 @@ class MapView extends View {
 //        center.log('center');
 //        center.log('center');
 //        var scale_scale = d3.scale.linear().domain([0, 600]).range([50, 3500]);
-        var scale = Reactive.Signal.constant(3800);
+        var scale = Reactive.Signal.constant(3200);
         scale.log('scale');
         var proj = Reactive.Signal.derived([scale, center], (values) => {
             var scale = values[0];

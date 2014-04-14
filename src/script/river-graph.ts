@@ -314,7 +314,7 @@ class NodeView extends AbsFeatureView<SystemNode> {
         // hovered
         this.element.addEventListener('mouseenter', (evt) => {
             layerView.mapView.hoveredController.update(this.feature);
-        });{}
+        });
     }
 
     maxWidthOfConnectedEdges() : number {

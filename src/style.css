@@ -69,5 +69,11 @@ svg {
 
 #legend h1 {
     margin-top: 5px;
-    font-family: helvetica;
+    font-family: sans-serif;
+}
+
+#view-source {
+  color: grey;
+  font-family: sans-serif;
+  float: right;
 }

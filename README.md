@@ -1,6 +1,8 @@
 colorado-river
 ==============
 
+[explanatory paper](https://docs.google.com/document/d/13xb4gsoNGpqxpm49TieC3vqXYqWyMIpB81_3muw7jFc/edit)
+
 To install:
 
 1. npm install -g typescript

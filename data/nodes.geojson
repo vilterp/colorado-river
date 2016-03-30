@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+                                                                                
+"features": [
+{ "type": "Feature", "properties": { "name": "Hoover Dam", "id": 1 }, "geometry": { "type": "Point", "coordinates": [ -114.742177790469611, 36.011052317335718 ] } },
+{ "type": "Feature", "properties": { "name": "Las Vegas", "id": 2 }, "geometry": { "type": "Point", "coordinates": [ -115.222213815213806, 36.211916562446298 ] } },
+{ "type": "Feature", "properties": { "name": null, "id": 3 }, "geometry": { "type": "Point", "coordinates": [ -108.30409692067893, 36.737067422092103 ] } },
+{ "type": "Feature", "properties": { "name": null, "id": 4 }, "geometry": { "type": "Point", "coordinates": [ -110.025354282273184, 39.534110634682754 ] } },
+{ "type": "Feature", "properties": { "name": "San Juan \/ Colorado confluence", "id": 5 }, "geometry": { "type": "Point", "coordinates": [ -110.893758524590055, 37.188413089330396 ] } },
+{ "type": "Feature", "properties": { "name": "Gulf of California", "id": 6 }, "geometry": { "type": "Point", "coordinates": [ -115.032057509245902, 31.966788827847335 ] } }
+]
+}

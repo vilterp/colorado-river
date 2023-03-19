@@ -1,0 +1,17 @@
+{
+  "name": "colorado-river",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:vilterp/colorado-river.git",
+  "author": "Pete Vilter <pete.vilter@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/script/river-graph.ts --bundle --outfile=public/bundle.js",
+    "serve": "cd public && http-server -c-1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.12",
+    "http-server": "^14.1.1",
+    "typescript": "^5.0.2"
+  }
+}

@@ -1,8 +1,6 @@
-/// <reference path="reactive/models.ts"/>
-/// <reference path="reactive/browser.ts"/>
-/// <reference path="reactive/core.ts"/>
-/// <reference path="geojson.ts"/>
-/// <reference path="typings/d3/d3.d.ts"/>
+import * as GeoJSON from "./geojson";
+import * as Reactive from "./reactive/core";
+import * as Browser from "./reactive/browser";
 
 interface Layer<A extends GeoJSON.Feature> {
     name : string;
@@ -24,7 +22,7 @@ function loadData() : Reactive.Future<LayerData> {
                  'polygons',
                  'edges',
                  'nodes'];
-    var futures = paths.map((path) => Reactive.Browser.HTTP.get('data/' + path + '.geojson').map(JSON.parse));
+    var futures = paths.map((path) => Browser.HTTP.get('data/' + path + '.geojson').map(JSON.parse));
     return Reactive.Future.all(futures).map((layers:Array<GeoJSON.FeatureCollection>) => {
         return {
             admin1: layers[0].features,
@@ -90,7 +88,7 @@ class MapView extends View {
         // initialize projection
         // trying to get the projection right
         var center = Reactive.Signal.constant({x: -19, y: 37.5});
-//        var mousePos = Reactive.Browser.mouse_pos(this.element);
+//        var mousePos = Browser.mouse_pos(this.element);
 //        var xscale = d3.scale.linear().domain([0, 800]).range([-180, 180]);
 //        var yscale = d3.scale.linear().domain([0, 500]).range([-90, 90]);
 //        var center = mousePos.map((pos) => { return { x: xscale(pos.x), y: yscale(pos.y) } });
@@ -266,7 +264,7 @@ class SystemElementView<A extends SystemElement> extends FeatureView<A> {
                 return className;
             }
         });
-        Reactive.Browser.bind_to_attribute(classNameSignal, this.element, 'class');
+        Browser.bind_to_attribute(classNameSignal, this.element, 'class');
     }
 
 }
@@ -310,7 +308,7 @@ class NodeView extends AbsFeatureView<SystemNode> {
             }
             return segments.join(' ');
         });
-        Reactive.Browser.bind_to_attribute(className, this.element, 'class');
+        Browser.bind_to_attribute(className, this.element, 'class');
         // hovered
         this.element.addEventListener('mouseenter', (evt) => {
             layerView.mapView.hoveredController.update(this.feature);
@@ -502,7 +500,7 @@ document.addEventListener('DOMContentLoaded', (_) => {
         mapView = new MapView(layerData);
         container.appendChild(mapView.element);
         var hoveredIndicator = document.getElementById('hovered-indicator');
-        Reactive.Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
+        Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
             if(el) {
                 var name = el.properties.name;
                 if(el.properties.flow_rate) {

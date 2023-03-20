@@ -3,8 +3,6 @@ import * as Reactive from "./reactive/core";
 import * as Browser from "./reactive/browser";
 import * as d3 from "d3";
 
-console.log(d3);
-
 interface Layer<A extends GeoJSON.Feature> {
     name : string;
     features : Array<A>;
@@ -34,6 +32,10 @@ function loadData() : Reactive.Future<LayerData> {
             edges: <Array<SystemEdge>> layers[3].features,
             nodes: <Array<SystemNode>> layers[4].features
         }
+    }).then((data) => {
+        document.getElementById('loading-indicator')?.remove();
+        console.log('done loading');
+        return data;
     });
 }
 
@@ -501,7 +503,7 @@ document.addEventListener('DOMContentLoaded', (_) => {
     var container = document.getElementById('mapview-container');
     loadData().then((layerData) => {
         mapView = new MapView(layerData);
-        container.appendChild(mapView.element);
+        container?.appendChild(mapView.element);
         var hoveredIndicator = document.getElementById('hovered-indicator');
         Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
             if(el) {

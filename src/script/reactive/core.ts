@@ -350,8 +350,8 @@ export class Future<A> {
         }
     }
 
-    then<B>(handler : (A) => Future<B>, err_handler? : (any) => void) {
-        var comp = new Completer();
+    then<B>(handler : (value: A) => B, err_handler? : (any) => void): Future<B> {
+        var comp = new Completer<B>();
         // TODO: ...
         var on_error : (any) => void;
         if(err_handler) {

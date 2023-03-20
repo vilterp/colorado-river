@@ -1,4 +1,3 @@
 .idea
-build
 deploy.sh
-
+node_modules

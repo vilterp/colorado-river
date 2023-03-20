@@ -1,0 +1,24 @@
+{
+  "name": "colorado-river",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:vilterp/colorado-river.git",
+  "author": "Pete Vilter <pete.vilter@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/script/river-graph.ts --bundle --outfile=public/bundle.js",
+    "convert-data": "mkdir -p public/data/natural-earth && build/convert-to-geojson.sh",
+    "serve": "cd public && http-server -c-1",
+    "clean": "rm -rf public/data"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.0",
+    "esbuild": "^0.17.12",
+    "http-server": "^14.1.1",
+    "shp2json": "^1.4.0",
+    "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "d3": "^7.8.2"
+  }
+}

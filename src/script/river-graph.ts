@@ -1,8 +1,9 @@
-/// <reference path="reactive/models.ts"/>
-/// <reference path="reactive/browser.ts"/>
-/// <reference path="reactive/core.ts"/>
-/// <reference path="geojson.ts"/>
-/// <reference path="typings/d3/d3.d.ts"/>
+import * as GeoJSON from "./geojson";
+import * as Reactive from "./reactive/core";
+import * as Browser from "./reactive/browser";
+import * as d3 from "d3";
+
+console.log(d3);
 
 interface Layer<A extends GeoJSON.Feature> {
     name : string;
@@ -24,7 +25,7 @@ function loadData() : Reactive.Future<LayerData> {
                  'polygons',
                  'edges',
                  'nodes'];
-    var futures = paths.map((path) => Reactive.Browser.HTTP.get('data/' + path + '.geojson').map(JSON.parse));
+    var futures = paths.map((path) => Browser.HTTP.get('data/' + path + '.geojson').map(JSON.parse));
     return Reactive.Future.all(futures).map((layers:Array<GeoJSON.FeatureCollection>) => {
         return {
             admin1: layers[0].features,
@@ -62,7 +63,7 @@ class MapView extends View {
     adj_list_downstream : AdjList;
     adj_list_upstream : AdjList;
 
-    path : Reactive.Signal<D3.Geo.Path>;
+    path : Reactive.Signal<d3.Geo.Path>;
 
     edges_by_id : {[edge_id : number] : SystemEdge};
 
@@ -90,7 +91,7 @@ class MapView extends View {
         // initialize projection
         // trying to get the projection right
         var center = Reactive.Signal.constant({x: -19, y: 37.5});
-//        var mousePos = Reactive.Browser.mouse_pos(this.element);
+//        var mousePos = Browser.mouse_pos(this.element);
 //        var xscale = d3.scale.linear().domain([0, 800]).range([-180, 180]);
 //        var yscale = d3.scale.linear().domain([0, 500]).range([-90, 90]);
 //        var center = mousePos.map((pos) => { return { x: xscale(pos.x), y: yscale(pos.y) } });
@@ -102,10 +103,10 @@ class MapView extends View {
         var proj = Reactive.Signal.derived([scale, center], (values) => {
             var scale = values[0];
             var center = values[1];
-            return d3.geo.albers().scale(scale).center([center.x, center.y]);
+            return d3.geoAlbers().scale(scale).center([center.x, center.y]);
         });
         this.path = proj.map((proj) => {
-            return d3.geo.path().projection(proj);
+            return d3.geoPath().projection(proj);
         });
         // build edges map
         this.edges_by_id = {};
@@ -152,11 +153,11 @@ class MapView extends View {
     buildSignalSystem() {
         var adj_list_downstream_copy = this.adj_list_downstream.copy();
         // sort
-        var order = [];
+        var order: string[] = [];
         var system_nodes = adj_list_downstream_copy.nodes();
         while(system_nodes.length > 0) {
             // find node with no out edges
-            var node;
+            var node: string;
             for(var i = 0; i < system_nodes.length; i++) {
                 node = system_nodes[i];
                 if(adj_list_downstream_copy.getEdges(node).length == 0) {
@@ -266,7 +267,7 @@ class SystemElementView<A extends SystemElement> extends FeatureView<A> {
                 return className;
             }
         });
-        Reactive.Browser.bind_to_attribute(classNameSignal, this.element, 'class');
+        Browser.bind_to_attribute(classNameSignal, this.element, 'class');
     }
 
 }
@@ -310,7 +311,7 @@ class NodeView extends AbsFeatureView<SystemNode> {
             }
             return segments.join(' ');
         });
-        Reactive.Browser.bind_to_attribute(className, this.element, 'class');
+        Browser.bind_to_attribute(className, this.element, 'class');
         // hovered
         this.element.addEventListener('mouseenter', (evt) => {
             layerView.mapView.hoveredController.update(this.feature);
@@ -332,7 +333,7 @@ class NodeView extends AbsFeatureView<SystemNode> {
 
 class EdgeView extends SystemElementView<SystemEdge> {
 
-    static EDGE_SCALE = (flow) => Math.max(5, d3.scale.log().domain([1, 11]).range([0, 20])(flow));
+    static EDGE_SCALE = (flow) => Math.max(5, d3.scaleLog().domain([1, 11]).range([0, 20])(flow));
 
     constructor(layerView:LayerView<SystemEdge>, feature:SystemEdge) {
         super(layerView, feature, layerView.mapView.signalSystem.edgesActive[feature.properties.id]);
@@ -399,7 +400,7 @@ class AdjList {
     }
 
     nodes():Array<string> {
-        var nodes = [];
+        var nodes: string[] = [];
         for(var i in this.edges) {
             nodes.push(i);
         }
@@ -502,7 +503,7 @@ document.addEventListener('DOMContentLoaded', (_) => {
         mapView = new MapView(layerData);
         container.appendChild(mapView.element);
         var hoveredIndicator = document.getElementById('hovered-indicator');
-        Reactive.Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
+        Browser.bind_to_innerText(hoveredIndicator, mapView.hovered.map((el) => {
             if(el) {
                 var name = el.properties.name;
                 if(el.properties.flow_rate) {

@@ -63,7 +63,7 @@ class MapView extends View {
     adj_list_downstream : AdjList;
     adj_list_upstream : AdjList;
 
-    path : Reactive.Signal<d3.Geo.Path>;
+    path : Reactive.Signal<d3.GeoPath>;
 
     edges_by_id : {[edge_id : number] : SystemEdge};
 

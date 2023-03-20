@@ -6,7 +6,6 @@ colorado-river
 To install:
 
 1. `$ yarn # install deps`
-2. `$ yarn convert-data`
 3. `$ yarn build`
 
 To run:

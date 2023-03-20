@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+"name": "edges",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "San Juan River", "type": "river", "id": 1, "from_node": 3, "to_node": 5, "watershed": 2, "flow_rate": 0.12 }, "geometry": { "type": "LineString", "coordinates": [ [ -108.310081347147701, 36.739108842291181 ], [ -110.907396181874731, 37.193717980941884 ] ] } },
+{ "type": "Feature", "properties": { "name": "Colorado River", "type": "river", "id": 2, "from_node": 4, "to_node": 5, "watershed": 1, "flow_rate": 8.48 }, "geometry": { "type": "LineString", "coordinates": [ [ -110.890878061676716, 37.195442849406987 ], [ -110.07041182509748, 39.546211459476282 ] ] } },
+{ "type": "Feature", "properties": { "name": "Colorado River", "type": "river", "id": 3, "from_node": 5, "to_node": 1, "watershed": 3, "flow_rate": 8.93 }, "geometry": { "type": "LineString", "coordinates": [ [ -114.742606250578362, 36.0091346780154 ], [ -110.890878061676716, 37.195442849406987 ] ] } },
+{ "type": "Feature", "properties": { "name": "Las Vegas Canal", "type": "canal", "id": 4, "from_node": 1, "to_node": 2, "watershed": null, "flow_rate": 0.29 }, "geometry": { "type": "LineString", "coordinates": [ [ -115.227596986045299, 36.209560512098697 ], [ -114.742034888697063, 36.01020432142677 ] ] } },
+{ "type": "Feature", "properties": { "name": "Colorado River", "type": "river", "id": 5, "from_node": 1, "to_node": 6, "watershed": 4, "flow_rate": 5.58 }, "geometry": { "type": "LineString", "coordinates": [ [ -115.047999743155117, 31.973528606028058 ], [ -114.741415806470613, 36.01044738559122 ] ] } }
+]
+}

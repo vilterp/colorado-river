@@ -7,15 +7,12 @@
   "license": "MIT",
   "scripts": {
     "build": "esbuild src/script/river-graph.ts --bundle --outfile=public/bundle.js",
-    "convert-data": "mkdir -p public/data/natural-earth && build/convert-to-geojson.sh",
-    "serve": "cd public && http-server -c-1",
-    "clean": "rm -rf public/data"
+    "serve": "cd public && http-server -c-1"
   },
   "devDependencies": {
     "@types/d3": "^7.4.0",
     "esbuild": "^0.17.12",
     "http-server": "^14.1.1",
-    "shp2json": "^1.4.0",
     "typescript": "^5.0.2"
   },
   "dependencies": {

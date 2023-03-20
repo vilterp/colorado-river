@@ -23,7 +23,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       # install deps
       - run: yarn
-      # build data
-      - run: yarn convert-data
       # build JS
       - run: yarn build

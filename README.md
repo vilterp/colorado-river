@@ -5,12 +5,11 @@ colorado-river
 
 To install:
 
-1. npm install -g typescript
-2. npm install -g http-server
-3. brew install gdal
+1. `$ yarn # install deps`
+2. `$ yarn convert-data`
+3. `$ yarn build`
 
 To run:
 
-1. $ make
-2. $ http-server build
+1. `$ yarn serve`
 3. visit URL http-server is listening on
